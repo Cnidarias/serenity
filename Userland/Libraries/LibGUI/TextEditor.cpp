@@ -421,7 +421,16 @@ void TextEditor::paint_event(PaintEvent& event)
         if (m_substitution_code_point.has_value() && substitute) {
             painter.draw_text(rect, substitution_code_point_view(raw_text.length()), font, alignment, attributes.color);
         } else {
-            painter.draw_text(rect, raw_text, font, alignment, attributes.color);
+            StringBuilder builder;
+            for (auto it = raw_text.begin(); it != raw_text.end(); ++it) {
+                if (*it == '\t') {
+                    for (int i = 0; i < soft_tab_width(); ++i) {
+                        builder.append(' ');
+                    }
+                } else
+                    builder.append(*it);
+            }
+            painter.draw_text(rect, builder.string_view(), font, alignment, attributes.color);
         }
         if (attributes.underline) {
             if (attributes.underline_style == Gfx::TextAttributes::UnderlineStyle::Solid)
@@ -1201,7 +1210,12 @@ int TextEditor::content_x_for_position(TextPosition const& position) const
                 if (offset_in_visual_line == 0) {
                     x_offset = 0;
                 } else {
-                    x_offset = text_width_for_font(visual_line_view.substring_view(0, offset_in_visual_line), font());
+                    auto section = visual_line_view.substring_view(0, offset_in_visual_line);
+                    x_offset = text_width_for_font(section, font());
+                    for (auto it = section.begin(); it != section.end(); ++it) {
+                        if (*it == '\t')
+                            x_offset += font().glyph_width(' ') * (soft_tab_width() - 1);
+                    }
                     x_offset += font().glyph_spacing();
                 }
                 return IterationDecision::Break;
@@ -1211,6 +1225,7 @@ int TextEditor::content_x_for_position(TextPosition const& position) const
         return m_horizontal_content_padding + ((is_single_line() && icon()) ? (icon_size() + icon_padding()) : 0) + x_offset;
     case Gfx::TextAlignment::CenterRight:
         // FIXME
+        // FIXME: Add offset for tabs
         VERIFY(!is_wrapping_enabled());
         return content_width() - m_horizontal_content_padding - (line.length() * fixed_glyph_width()) + (position.column() * fixed_glyph_width());
     default:
