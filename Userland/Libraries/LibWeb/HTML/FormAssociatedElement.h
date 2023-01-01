@@ -49,6 +49,8 @@ public:
 
     bool enabled() const;
 
+    bool is_mutable() const;
+
     void set_parser_inserted(Badge<HTMLParser>);
 
     // https://html.spec.whatwg.org/multipage/forms.html#category-listed

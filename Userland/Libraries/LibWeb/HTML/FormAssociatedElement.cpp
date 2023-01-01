@@ -48,6 +48,21 @@ bool FormAssociatedElement::enabled() const
     return true;
 }
 
+bool FormAssociatedElement::is_mutable() const
+{
+    // A form control is not mutable if the element is disabled or if it is set to readonly
+    if (!enabled())
+        return false;
+
+    auto const& html_element = const_cast<FormAssociatedElement&>(*this).form_associated_element_to_html_element();
+
+    // 1. The element is a button, input, select, textarea, or form-associated custom element, and the disabled attribute is specified on this element (regardless of its value).
+    if ((is<HTMLButtonElement>(html_element) || is<HTMLInputElement>(html_element) || is<HTMLSelectElement>(html_element) || is<HTMLTextAreaElement>(html_element)) && html_element.has_attribute(HTML::AttributeNames::readonly))
+        return false;
+
+    return true;
+}
+
 void FormAssociatedElement::set_parser_inserted(Badge<HTMLParser>)
 {
     m_parser_inserted = true;
