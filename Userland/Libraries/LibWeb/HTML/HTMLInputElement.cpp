@@ -147,7 +147,9 @@ static void show_the_picker_if_applicable(HTMLInputElement& element)
     if (!is<HTML::Window>(global_object) || !static_cast<HTML::Window&>(global_object).has_transient_activation())
         return;
 
-    // FIXME: 2. If element is not mutable, then return.
+    // 2. If element is not mutable, then return.
+    if (!element.is_mutable())
+        return;
 
     // 3. If element's type attribute is in the File Upload state, then run these steps in parallel:
     if (element.type_state() == HTMLInputElement::TypeAttributeState::FileUpload) {
